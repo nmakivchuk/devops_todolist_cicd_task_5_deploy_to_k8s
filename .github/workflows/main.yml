@@ -118,3 +118,31 @@ jobs:
       with:
         name: helm-package
         path: ./*.tgz
+
+  deploy-helm:
+    name: Deploy Helm
+    needs: [ helm-ci, docker-ci ]
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: helm-package
+        path: .
+
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v4.2.0
+
+    - name: Set up Kubectl
+      uses: azure/setup-kubectl@v4
+
+    - uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - uses: azure/aks-set-context@v3
+      with:
+        resource-group: ${{ vars.AZURE_RESOURCE_GROUP }}
+        cluster-name: ${{ vars.AZURE_CLUSTER_NAME }}

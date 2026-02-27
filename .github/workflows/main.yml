@@ -121,7 +121,7 @@ jobs:
 
   deploy-helm:
     name: Deploy Helm
-    needs: [ helm-ci, docker-ci ]
+    needs: [ docker-ci, helm-ci ]
     runs-on: ubuntu-latest
     environment: development
 
@@ -132,7 +132,7 @@ jobs:
         path: .
 
 
-    - name: Set up Helm
+    - name: Set Up Helm
       uses: azure/setup-helm@v4.2.0
 
     - name: Set up Kubectl

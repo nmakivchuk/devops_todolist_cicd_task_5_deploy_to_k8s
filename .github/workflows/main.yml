@@ -162,3 +162,4 @@ jobs:
         --set todoapp.secret.login="${{ secrets.TODOAPP_LOGIN }}" \
         --set todoapp.secret.DB_CONNECTION="${{ secrets.DB_CONNECTION }}" \
         --set todoapp.image.version=${{ github.sha }}
+        

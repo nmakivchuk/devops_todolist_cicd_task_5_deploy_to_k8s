@@ -119,47 +119,11 @@ jobs:
         name: helm-package
         path: ./*.tgz
 
-  deploy-helm:
-    name: Deploy Helm
-    needs: [ docker-ci, helm-ci ]
-    runs-on: ubuntu-latest
-    environment: development
-
-    steps:
-    - uses: actions/download-artifact@v4
-      with:
-        name: helm-package
-        path: .
-
-    - uses: actions/download-artifact@v4
-      with:
-        name: helm-artifacts
-        path: .
-
-    - name: Set Up Helm
-      uses: azure/setup-helm@v4.2.0
-
-    - name: Set up Kubectl
-      uses: azure/setup-kubectl@v4
-
-    - uses: azure/login@v2
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-    - uses: azure/aks-set-context@v3
-      with:
-        resource-group: ${{ vars.AZURE_RESOURCE_GROUP }}
-        cluster-name: ${{ vars.AZURE_CLUSTER_NAME }}
-
-    - name: Deploy helm to Development
-      run: |
-        helm upgrade --install --atomic --wait --timeout 3600s --debug todoapp ./todoapp-*.tgz \
-        -f ./todoapp/values.yaml \
-        --set mysql.configs.MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD}}" \
-        --set mysql.configs.MYSQL_USER="${{ secrets.MYSQL_USER }}" \
-        --set mysql.configs.MYSQL_PASSWORD="${{ secrets.MYSQL_PASSWORD }}" \
-        --set todoapp.secret.password="${{ secrets.TODOAPP_PASSWORD }}" \
-        --set todoapp.secret.login="${{ secrets.TODOAPP_LOGIN }}" \
-        --set todoapp.secret.DB_CONNECTION="${{ secrets.DB_CONNECTION }}" \
-        --set todoapp.image.version=${{ github.sha }}
-        
+  deploy-helm-dev:
+    name: Deploy helm
+    uses: ./.github/workflows/deployment-workflow.yml
+    needs: [helm-ci, docker-ci]
+    secrets: inherit
+    with:
+      environment: development
+      version: ${{ github.sha }}

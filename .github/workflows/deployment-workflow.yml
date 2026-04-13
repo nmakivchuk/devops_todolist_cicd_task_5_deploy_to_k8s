@@ -1,4 +1,4 @@
-name: helm-upgrade
+name: Deployment
 run-name: ${{github.actor}} - ${{github.ref_name}}
 
 on:
@@ -8,50 +8,43 @@ on:
         required: true
         description: 'Environment to deploy to'
         type: string
-      version:
+    secrets:
+      DOCKERHUB_USERNAME:
         required: true
-        type: string
-      helm-values-path:
-        type: string
-        default: './todoapp/values.yaml'
-      helm-release-name:
-        default: todoapp
-        type: string
 
 jobs:
-  deploy-helm:
+  deploy:
     name: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Helm Package
+        uses: actions/download-artifact@v4
         with:
           name: helm-package
           path: .
 
-      - uses: actions/download-artifact@v4
+      - name: Create Kind Cluster
+        uses: helm/kind-action@v1.10.0
         with:
-          name: helm-artifacts
-          path: .
+          config: cluster.yml
 
       - name: Set Up Helm
         uses: azure/setup-helm@v4.2.0
 
-      - name: Set up Kubectl
-        uses: azure/setup-kubectl@v4
-
-      - uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - uses: azure/aks-set-context@v3
-        with:
-          resource-group: ${{ vars.AZURE_RESOURCE_GROUP }}
-          cluster-name: ${{ vars.AZURE_CLUSTER_NAME }}
-
-      - name: Deploy helm to Development
+      - name: Helm Dry Run
         run: |
-          helm upgrade --install --rollback-on-failure --wait --timeout 3600s --debug ${{inputs.helm-release-name}} ./todoapp-*.tgz \
+          helm install todoapp ./todoapp-*.tgz \
+            --dry-run --debug \
+            --set todoapp.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/todoapp \
+            --set todoapp.image.tag=${{ github.sha }}
+
+      - name: Helm Upgrade
+        run: |
+          helm upgrade --install --atomic --wait --timeout 3600s --debug ${{inputs.helm-release-name}} ./todoapp-*.tgz \
           -f ${{ inputs.helm-values-path }} \
           --set mysql.configs.MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD}}" \
           --set mysql.configs.MYSQL_USER="${{ secrets.MYSQL_USER }}" \
@@ -60,4 +53,3 @@ jobs:
           --set todoapp.secret.login="${{ secrets.TODOAPP_LOGIN }}" \
           --set todoapp.secret.DB_CONNECTION="${{ secrets.DB_CONNECTION }}" \
           --set todoapp.image.version=${{ github.sha }}
-

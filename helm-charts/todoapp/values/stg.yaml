@@ -1,10 +1,3 @@
-common:
-  environment: "Staging"
-  namespace: todoapp-staging
-
-mysql:
-  namespace: mysql-staging
-
 todoapp:
   namespace: todoapp
   image:

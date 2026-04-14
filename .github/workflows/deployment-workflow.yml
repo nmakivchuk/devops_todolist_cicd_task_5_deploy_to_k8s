@@ -50,10 +50,10 @@ jobs:
           helm install ${{ inputs.helm-release-name }} ./*.tgz \
             --dry-run --debug \
             --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.helm-release-name}} \
-            --set image.tag=${{ inputs.version }}
+            --set image.tag=${{ inputs.image_tag }}
 
       - name: Helm Upgrade
         run: |
           helm upgrade --install --atomic --wait --timeout 3600s --debug ${{ inputs.helm-release-name }} ./*.tgz \
           --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.helm-release-name}} \
-          --set image.tag=${{ inputs.version}}
+          --set image.tag=${{ inputs.image_tag}}

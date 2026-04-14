@@ -8,8 +8,18 @@ on:
         required: true
         description: 'Environment to deploy to'
         type: string
+      version:
+        required: true
+        description: 'Docker image version to deploy (e.g., Git SHA)'
+        type: string
+      helm-release-name:
+        description: 'Name of the Helm release'
+        type: string
+        default: 'todoapp'
     secrets:
       DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_TOKEN:
         required: true
 
 jobs:
@@ -37,13 +47,13 @@ jobs:
 
       - name: Helm Dry Run
         run: |
-          helm install todoapp ./todoapp-*.tgz \
+          helm install ${{ inputs.helm-release-name }} ./*.tgz \
             --dry-run --debug \
-            --set todoapp.image.repository=${{ secrets.DOCKERHUB_USERNAME }}/todoapp \
-            --set todoapp.image.tag=${{ github.sha }}
+            --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DockerImageName}} \
+            --set image.tag=${{ inputs.version }}
 
       - name: Helm Upgrade
         run: |
-          helm upgrade --install --atomic --wait --timeout 3600s --debug ${{inputs.helm-release-name}} ./todoapp-*.tgz \
-          --set todoapp.image.repository="${{ secrets.DOCKERHUB_USERNAME }}/todoapp" \
-          --set todoapp.image.version=${{ github.sha }}
+          helm upgrade --install --atomic --wait --timeout 3600s --debug ${{ inputs.helm-release-name }} ./*.tgz \
+          --set image.repository="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DockerImageName}} \
+          --set image.tag=${{ inputs.version}}

@@ -123,16 +123,19 @@ jobs:
     needs: [docker-ci, helm-ci]
     if: github.ref_name == 'main'
     uses: ./.github/workflows/deployment-workflow.yml
+    secrets: inherit
     with:
-      environment: development
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
+      environment: staging
+      image_tag: ${{ github.sha }}
+      helm-release-name: todoapp-dev
+
 
   deploy-staging:
     needs: [deploy-development]
     if: github.ref_name == 'main'
     uses: ./.github/workflows/deployment-workflow.yml
+    secrets: inherit
     with:
       environment: staging
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME}}
+      image_tag: ${{ github.sha }}
+      helm-release-name: todoapp-staging

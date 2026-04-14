@@ -8,7 +8,7 @@ on:
         required: true
         description: 'Environment to deploy to'
         type: string
-      version:
+      image_tag:
         required: true
         description: 'Docker image version to deploy (e.g., Git SHA)'
         type: string
@@ -49,11 +49,11 @@ jobs:
         run: |
           helm install ${{ inputs.helm-release-name }} ./*.tgz \
             --dry-run --debug \
-            --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DockerImageName}} \
+            --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.helm-release-name}} \
             --set image.tag=${{ inputs.version }}
 
       - name: Helm Upgrade
         run: |
           helm upgrade --install --atomic --wait --timeout 3600s --debug ${{ inputs.helm-release-name }} ./*.tgz \
-          --set image.repository="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DockerImageName}} \
+          --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.helm-release-name}} \
           --set image.tag=${{ inputs.version}}
